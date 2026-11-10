@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SpendWise</title>
+<style>
+:root{--green:#2e7d32;--bg:#f4f6f8;--card:#fff;--text:#222;--muted:#555;--line:#e3e6ea;--row:#f7f8fa;--input:#fff;--bd:#ccc;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--green:#43a047;--bg:#14181c;--card:#1e2429;--text:#eceff1;--muted:#aab;--line:#2f373e;--row:#232a30;--input:#14181c;--bd:#3b454d}}
+:root[data-theme="dark"]{--green:#43a047;--bg:#14181c;--card:#1e2429;--text:#eceff1;--muted:#aab;--line:#2f373e;--row:#232a30;--input:#14181c;--bd:#3b454d}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+header{background:#2e7d32;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:18px 30px;flex-wrap:wrap;gap:10px}
+.logo{font-size:24px;font-weight:bold}
+nav a{color:#fff;text-decoration:none;margin-left:22px;font-size:14px}
+nav a:hover,nav a:focus-visible{text-decoration:underline}
+main{max-width:1200px;margin:0 auto;padding:22px 20px 40px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:22px}
+.card{background:var(--card);border-radius:10px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.stat h3{margin:0 0 8px;font-size:15px;color:var(--green)}
+.stat p{margin:0;font-size:18px;font-weight:bold}
+.grid{display:grid;grid-template-columns:1fr 2.3fr;gap:15px;align-items:start}
+h2{margin:0 0 16px;color:var(--green);font-size:20px}
+label{display:block;font-size:14px;margin:14px 0 8px}
+input,select{width:100%;padding:11px;border:1px solid var(--bd);border-radius:6px;font-size:14px;background:var(--input);color:var(--text)}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+button{margin-top:18px;width:100%;padding:12px;background:#2e7d32;color:#fff;border:0;border-radius:6px;font-size:15px;font-weight:bold;cursor:pointer}
+button:hover{background:#256427}
+.err{color:#c62828;font-size:13px;min-height:16px;margin-top:8px}
+.tbl{overflow-x:auto;min-height:230px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{background:#2e7d32;color:#fff;padding:11px;text-align:center}
+td{padding:12px 10px;border-bottom:1px solid var(--line)}
+tr:nth-child(even) td{background:var(--row)}
+@media (max-width:760px){.stats,.grid{grid-template-columns:1fr}header{padding:16px 18px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">💰 SpendWise</div>
+  <nav><a href="#">Dashboard</a><a href="#">Reports</a><a href="#">Settings</a></nav>
+</header>
+<main>
+  <section class="stats">
+    <div class="card stat"><h3>Total Budget</h3><p id="budget"></p></div>
+    <div class="card stat"><h3>Total Expenses</h3><p id="spent"></p></div>
+    <div class="card stat"><h3>Remaining</h3><p id="left"></p></div>
+  </section>
+  <section class="grid">
+    <div class="card">
+      <h2>Add Expense</h2>
+      <div>
+        <label for="name">Expense Name</label>
+        <input id="name" type="text" autocomplete="off">
+        <label for="amount">Amount</label>
+        <input id="amount" type="number" min="1" inputmode="numeric">
+        <label for="cat">Category</label>
+        <select id="cat">
+          <option>Food</option><option>Transport</option><option>Shopping</option><option>Bills</option><option>Other</option>
+        </select>
+        <div class="err" id="err" role="alert"></div>
+        <button id="add" type="button">Add Expense</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Expense Records</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Name</th><th>Amount</th><th>Category</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+const BUDGET = 50000;
+let spent = 18500;
+const records = [
+  {name:"Lunch", amount:500, cat:"Food"},
+  {name:"Bus Fare", amount:150, cat:"Transport"},
+  {name:"Notebook", amount:300, cat:"Shopping"}
+];
+const kes = n => "KES " + n.toLocaleString("en-US");
+const $ = id => document.getElementById(id);
+function render(){
+  $("budget").textContent = kes(BUDGET);
+  $("spent").textContent = kes(spent);
+  $("left").textContent = kes(BUDGET - spent);
+  $("rows").innerHTML = "";
+  records.forEach(r => {
+    const tr = document.createElement("tr");
+    [r.name, kes(r.amount), r.cat].forEach(v => {
+      const td = document.createElement("td"); td.textContent = v; tr.appendChild(td);
+    });
+    $("rows").appendChild(tr);
+  });
+}
+$("add").addEventListener("click", () => {
+  const name = $("name").value.trim();
+  const amount = Number($("amount").value);
+  if(!name || !(amount > 0)){ $("err").textContent = "Enter an expense name and an amount above 0."; return; }
+  $("err").textContent = "";
+  records.push({name, amount, cat:$("cat").value});
+  spent += amount;
+  $("name").value = ""; $("amount").value = "";
+  render();
+});
+render();
+</script>
+</body>
+</html>
